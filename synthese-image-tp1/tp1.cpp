@@ -1,4 +1,4 @@
-#include "vec.hpp"
+#include "vec.h"
 #include <iostream>
 #include <vector>
 #include <string>
