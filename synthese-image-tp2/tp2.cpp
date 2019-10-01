@@ -67,17 +67,17 @@ bool shadow(std::vector<Sphere> sphereTab, Ray lightRay) {
 
 int main()
 {
-	PPM ppm(600, 600, 1000);
+	PPM ppm(600, 600, 255);
 	std::vector<Sphere> sphereTab = {
-		Sphere{Vec3<float>{300, 300, 300}, 200},
+		Sphere{Vec3<float>{300, 300, 300}, Vec3<float> 200},
 		Sphere{Vec3<float>{75, 75, 50}, 25},
-		Sphere{Vec3<float>{525, 525, 50}, 25},
-		//Sphere{Vec3<float>{300, 300, 10000}, 300},
+		Sphere{Vec3<float>{525, 300, 50}, 30},
+		Sphere{Vec3<float>{300, 300, 10000}, 4000},
 	};
 
 	std::vector<Light> lightTab = {
-		Light{ Vec3<float>{700,300,100}, Vec3<float>{100, 0, 0}, 1},
-		Light{ Vec3<float>{0,0,-50}, Vec3<float>{100, 0, 100}, 1},
+		Light{ Vec3<float>{700,300,50}, Vec3<float>{100, 0, 0}, 10},
+		Light{ Vec3<float>{0,0,-50}, Vec3<float>{0, 0, 100}, 10},
 	};
 
 	Vec3<float> camOrigin = { 300, 300, -1000 };
@@ -87,6 +87,7 @@ int main()
 	for (int row = 0; row < 600; row++) {
 		for (int col = 0; col < 600; col++) {
 			Vec3<float> pixel = { float(col), float(600 - row), 0 };
+			float red = 0, green = 0, blue = 0;
 			Vec3<float> camDir = normalize(pixel - camOrigin);
 			Ray ray{ pixel, camDir};
 			float distance = 0;
@@ -102,26 +103,28 @@ int main()
 					Light currentLight = lightTab.at(l);
 					Vec3<float> lightDir = normalize(currentLight.origin - pointToLight);
 					Vec3<float> normal = normalize(pointToLight - currentSphere.center);
-					float distToLight = norm(currentLight.origin - pointToLight);
+					float distToLight = norm(lightDir);
 					Ray lightRay{ pointToLight + 0.01f * normal, lightDir};
 
 					bool inShadow = shadow(sphereTab, lightRay);
 
 					if (!inShadow) {
-						Vec3<float> clampedLightColor = clampVec3(currentLight.color, 0.0f, 1.0f);
+						/*Vec3<float> clampedLightColor = clampVec3(currentLight.color, 0.0f, 1.0f);
 						float clampedX = clamp(ppm.pixelMatrix[row][col].x + (currentLight.intensity * dot(lightRay.direction, normal) * clampedLightColor.x), 0.0f, 1.0f);
 						float clampedY = clamp(ppm.pixelMatrix[row][col].y + (currentLight.intensity * dot(lightRay.direction, normal) * clampedLightColor.y), 0.0f, 1.0f);
 						float clampedZ = clamp(ppm.pixelMatrix[row][col].z + (currentLight.intensity * dot(lightRay.direction, normal) * clampedLightColor.z), 0.0f, 1.0f);
 						ppm.pixelMatrix[row][col].x = clampedX * ppm.maxValue;
 						ppm.pixelMatrix[row][col].y = clampedY * ppm.maxValue;
-						ppm.pixelMatrix[row][col].z = clampedZ * ppm.maxValue;
-
-						/*Vec3<float> clampedLightColor = clampVec3(currentLight.color, 0.0f, 1.0f);
-						float clampedX = clamp(ppm.pixelMatrix[row][col].x + ((currentLight.intensity) * dot(lightRay.direction, normal) * clampedLightColor.x), 0.0f, 1.0f);
-						ppm.pixelMatrix[row][col].x = clampedX * ppm.maxValue;*/
+						ppm.pixelMatrix[row][col].z = clampedZ * ppm.maxValue;*/
+						red += ((currentLight.intensity * (1/(distToLight*distToLight))) * dot(lightRay.direction, normal) * currentLight.color.x);
+						green += ((currentLight.intensity * (1 / (distToLight * distToLight))) * dot(lightRay.direction, normal) * currentLight.color.y);
+						blue += ((currentLight.intensity * (1 / (distToLight * distToLight))) * dot(lightRay.direction, normal) * currentLight.color.z);
 					}
 				}
 			}
+			ppm.pixelMatrix[row][col].x = clamp((int)red, 0, ppm.maxValue);
+			ppm.pixelMatrix[row][col].y = clamp((int)green, 0, ppm.maxValue);
+			ppm.pixelMatrix[row][col].z = clamp((int)blue, 0, ppm.maxValue);
 		}
 	}
 

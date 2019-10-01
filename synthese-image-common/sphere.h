@@ -8,5 +8,6 @@ using namespace std;
 struct Sphere
 {
 	Vec3<float> center;
+	Vec3<float> albedo;
 	float radius;
 };
