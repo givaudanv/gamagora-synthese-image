@@ -34,33 +34,36 @@ std::optional<float> intersect(Ray ray, Sphere sphere) {
 	return t;
 }
 
+PPM initPPM(PPM ppm) {
+	for (int row = 0; row < 600; row++) {
+		for (int col = 0; col < 600; col++) {
+			ppm.pixelMatrix[row][col] = Vec3<int>{ 0, 0, 0 };
+		}
+	}
+
+	return ppm;
+}
+
 int main()
 {
-	PGM pgm(600, 600, 255);
+	PPM ppm(600, 600, 1000);
 	std::vector<Sphere> sphereTab = {
 		Sphere{Vec3<float>{300, 300, 300}, 250},
 		Sphere{Vec3<float>{100, 100, 100}, 50},
-		Sphere{Vec3<float>{500, 100, 500}, 50},
+		//Sphere{Vec3<float>{500, 100, 500}, 50},
 		Sphere{Vec3<float>{500, 500, 75}, 50},
 	};
 
 	std::vector<Light> lightTab = {
-		Light{ Vec3<float>{800,800,50}, 100 },
-		Light{ Vec3<float>{50,-150,50}, 90 },
+		//Light{ Vec3<float>{400,-100,50}, Vec3<float>{1, 1, 1}, 5},
+		Light{ Vec3<float>{50,-150,50}, Vec3<float>{1, 1, 1}, 5},
 	};
 
-	
-
-	for (int row = 0; row < 600; row++) {
-		for (int col = 0; col < 600; col++) {
-			pgm.pixelMatrix[row][col] = 0;
-		}
-	}
+	ppm = initPPM(ppm);
 	
 	for (int row = 0; row < 600; row++) {
 		for (int col = 0; col < 600; col++) {
 			float t = 0;
-			float coef = 1;
 			Vec3<float> pixel = { float(col), float(600 - row), 0 };
 			Ray ray{ pixel, Vec3<float>{ 0, 0, 1 } };
 			int currentSphereIndex = -1;
@@ -96,13 +99,18 @@ int main()
 					}
 
 					if (!inShadow) {
-						float clamped = clamp(coef * dot(lightRay.direction, normal), 0.0f, 1.0f);
-						pgm.pixelMatrix[row][col] = (pgm.pixelMatrix[row][col] / pgm.maxValue) + (clamped * pgm.maxValue);
+						Vec3<float> clampedLightColor = clampVec3(currentLight.color, 0.0f, 1.0f);
+						float clampedX = clamp(ppm.pixelMatrix[row][col].x + (currentLight.intensity * dot(lightRay.direction, normal) * clampedLightColor.x), 0.0f, 1.0f);
+						float clampedY = clamp(ppm.pixelMatrix[row][col].y + (currentLight.intensity * dot(lightRay.direction, normal) * clampedLightColor.y), 0.0f, 1.0f);
+						float clampedZ = clamp(ppm.pixelMatrix[row][col].z + (currentLight.intensity * dot(lightRay.direction, normal) * clampedLightColor.z), 0.0f, 1.0f);
+						ppm.pixelMatrix[row][col].x = clampedX * ppm.maxValue;
+						ppm.pixelMatrix[row][col].y = clampedY * ppm.maxValue;
+						ppm.pixelMatrix[row][col].z = clampedZ * ppm.maxValue;
 					}
 				}
 			}
 		}
 	}
 
-	pgm.save("image.pgm");
+	ppm.save("image.ppm");
 }

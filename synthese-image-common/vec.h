@@ -1,6 +1,7 @@
 #pragma once
 #include <cmath>
 #include <iostream>
+#include <algorithm>
 
 using namespace std;
 
@@ -79,4 +80,10 @@ template<typename T>
 T normalize(const T& v)
 {
 	return v / norm(v);
+}
+
+template<typename T>
+T clampVec3(const T& v, const float &min, const float &max)
+{
+	return T{ clamp(v.x, min, max), clamp(v.y, min, max), clamp(v.z, min, max) };
 }
