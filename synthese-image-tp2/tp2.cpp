@@ -1,5 +1,10 @@
+#define _USE_MATH_DEFINES
 #include "../synthese-image-common/ray.h"
 #include "../synthese-image-common/sphere.h"
+#include "../synthese-image-common/box.h"
+#include "../synthese-image-common/tree.h"
+#include "../synthese-image-common/node.h"
+#include "../synthese-image-common/leaf.h"
 #include "../synthese-image-common/light.h"
 #include "../synthese-image-common/vec.h"
 #include "../synthese-image-common/PGM.cpp"
@@ -12,6 +17,26 @@
 #include <fstream>
 #include <optional>
 #include <algorithm>
+#include <math.h>
+
+float randomFloat() {
+	return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+}
+
+std::vector<Light> generateLightSphere(Vec3<float> c, float r, float intensity, int nbPoint) {
+	std::vector<Light> lightSphere;
+
+	for (int i = 0; i < nbPoint; i++) {
+		float r1 = randomFloat();
+		float r2 = randomFloat();
+		float x = c.x + 2 * r * cos(2 * (float)M_PI * r1) * sqrt(r2 * (2 - r2));
+		float y = c.y + 2 * r * sin(2 * (float)M_PI * r1) * sqrt(r2 * (2 - r2));
+		float z = c.z + r * (2 - 2 * r2);
+		lightSphere.push_back({ Vec3<float>{x, y, z}, Vec3<float>{100,100,100}, intensity });
+	}
+
+	return lightSphere;
+}
 
 std::optional<float> intersect(Ray ray, Sphere sphere) {
 	float a = 1;
@@ -65,22 +90,40 @@ bool shadow(std::vector<Sphere> sphereTab, Ray lightRay) {
 	return inShadow;
 }
 
+/*Node generateTree(std::vector<Sphere> spheres) {
+	Node root;
+	std::vector<Leaf> leaves;
+
+	for (Sphere s : spheres)
+	{
+		Leaf l(&s);
+		leaves.push_back(l);
+	}
+
+	return root;
+}*/
+
 int main()
 {
-	PPM ppm(600, 600, 255);
-	std::vector<Sphere> sphereTab = {
-		Sphere{Vec3<float>{300, 300, 300}, Vec3<float> 200},
-		Sphere{Vec3<float>{75, 75, 50}, 25},
-		Sphere{Vec3<float>{525, 300, 50}, 30},
-		Sphere{Vec3<float>{300, 300, 10000}, 4000},
-	};
-
-	std::vector<Light> lightTab = {
-		Light{ Vec3<float>{700,300,50}, Vec3<float>{100, 0, 0}, 10},
-		Light{ Vec3<float>{0,0,-50}, Vec3<float>{0, 0, 100}, 10},
-	};
-
+	srand(static_cast <unsigned> (time(0)));
+	PPM ppm(600, 600, 100);
 	Vec3<float> camOrigin = { 300, 300, -1000 };
+
+	std::vector<Sphere> sphereTab = {
+		Sphere{Vec3<float>{300, 300, 300}, 200, Vec3<float>{30, 50, 15}},
+		Sphere{Vec3<float>{75, 75, 50}, 25, Vec3<float>{70, 70, 1}},
+		Sphere{Vec3<float>{525, 300, 50}, 30, Vec3<float>{1, 100, 1}},
+		Sphere{Vec3<float>{100, 500, 400}, 30, Vec3<float>{100, 100, 100}},
+		Sphere{Vec3<float>{550, 525, 400}, 100, Vec3<float>{1, 1, 1}},
+	};
+
+	//std::vector<Light> lightTab = generateLightSphere(Vec3<float>{ 100, 550, 25 }, 10, 1, 20);
+	std::vector<Light> lightTab = {
+		Light{ Vec3<float>{100, 550, 25}, Vec3<float>{100,100,100}, 0.1f },
+		Light{ Vec3<float>{600, 300, 25}, Vec3<float>{100,100,100}, 0.1f }
+	};
+
+	//Node root = generateTree(sphereTab);
 
 	initPPM(ppm);
 	
@@ -109,16 +152,12 @@ int main()
 					bool inShadow = shadow(sphereTab, lightRay);
 
 					if (!inShadow) {
-						/*Vec3<float> clampedLightColor = clampVec3(currentLight.color, 0.0f, 1.0f);
-						float clampedX = clamp(ppm.pixelMatrix[row][col].x + (currentLight.intensity * dot(lightRay.direction, normal) * clampedLightColor.x), 0.0f, 1.0f);
-						float clampedY = clamp(ppm.pixelMatrix[row][col].y + (currentLight.intensity * dot(lightRay.direction, normal) * clampedLightColor.y), 0.0f, 1.0f);
-						float clampedZ = clamp(ppm.pixelMatrix[row][col].z + (currentLight.intensity * dot(lightRay.direction, normal) * clampedLightColor.z), 0.0f, 1.0f);
-						ppm.pixelMatrix[row][col].x = clampedX * ppm.maxValue;
-						ppm.pixelMatrix[row][col].y = clampedY * ppm.maxValue;
-						ppm.pixelMatrix[row][col].z = clampedZ * ppm.maxValue;*/
-						red += ((currentLight.intensity * (1/(distToLight*distToLight))) * dot(lightRay.direction, normal) * currentLight.color.x);
+						red += ((currentLight.intensity * (1 / (distToLight * distToLight))) * dot(lightRay.direction, normal) * currentLight.color.x * currentSphere.albedo.x);
+						green += ((currentLight.intensity * (1 / (distToLight * distToLight))) * dot(lightRay.direction, normal) * currentLight.color.y * currentSphere.albedo.y);
+						blue += ((currentLight.intensity * (1 / (distToLight * distToLight))) * dot(lightRay.direction, normal) * currentLight.color.z * currentSphere.albedo.z);
+						/*red += ((currentLight.intensity * (1 / (distToLight * distToLight))) * dot(lightRay.direction, normal) * currentLight.color.x);
 						green += ((currentLight.intensity * (1 / (distToLight * distToLight))) * dot(lightRay.direction, normal) * currentLight.color.y);
-						blue += ((currentLight.intensity * (1 / (distToLight * distToLight))) * dot(lightRay.direction, normal) * currentLight.color.z);
+						blue += ((currentLight.intensity * (1 / (distToLight * distToLight))) * dot(lightRay.direction, normal) * currentLight.color.z);*/
 					}
 				}
 			}

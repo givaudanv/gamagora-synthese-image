@@ -19,12 +19,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="box.h" />
+    <ClInclude Include="leaf.h" />
     <ClInclude Include="light.h" />
+    <ClInclude Include="node.h" />
     <ClInclude Include="PGM.h" />
     <ClInclude Include="PortableAnymap.h" />
     <ClInclude Include="PPM.h" />
     <ClInclude Include="ray.h" />
     <ClInclude Include="sphere.h" />
+    <ClInclude Include="tree.h" />
     <ClInclude Include="vec.h" />
   </ItemGroup>
   <ItemGroup>

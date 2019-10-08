@@ -2,7 +2,12 @@
 #include "CppUnitTest.h"
 #include "../synthese-image-common/ray.h"
 #include "../synthese-image-common/sphere.h"
+#include "../synthese-image-common/box.h"
+#include "../synthese-image-common/light.h"
 #include "../synthese-image-common/vec.h"
+#include "../synthese-image-common/tree.h"
+#include "../synthese-image-common/leaf.h"
+#include "../synthese-image-common/node.h"
 #include "../synthese-image-tp2/tp2.cpp"
 #include <iostream>
 #include <vector>
@@ -26,7 +31,7 @@ namespace teststp2
 			float expected = 15;
 
 			std::optional<float> t = intersect(ray, sphere);
-			Assert::AreEqual(expected, t.value());
+			Assert::AreEqual(expected, t.value_or(-1));
 		}
 
 		TEST_METHOD(TestNoIntersection)
@@ -73,19 +78,26 @@ namespace teststp2
 			Assert::AreEqual(expectedIndex, currentSphereIndex);
 		}
 
-		/*TEST_METHOD(InitPPMEmpty)
+		TEST_METHOD(TestIntersectionFeuille)
 		{
-			PPM ppm(600, 600, 1000);
-			initPPM(ppm);
-			Vec3<int> expected = Vec3<int>{ 0, 0, 0 };
+			Sphere sphere{ Vec3<float>{0, 0, 20}, 5 };
+			Ray ray{ Vec3<float>{0, 0, 0}, Vec3<float>{0,0,1} };
+			Leaf l(&sphere);
+			float expected = 15;
 
-			for (int row = 0; row < 600; row++) {
-				for (int col = 0; col < 600; col++) {
-					Assert::AreEqual(expected.x, ppm.pixelMatrix[row][col].x);
-					Assert::AreEqual(expected.y, ppm.pixelMatrix[row][col].y);
-					Assert::AreEqual(expected.z, ppm.pixelMatrix[row][col].z);
-				}
-			}
-		}*/
+			std::optional<float> t = l.intersect(ray);
+			Assert::AreEqual(expected, t.value_or(-1));
+		}
+
+		TEST_METHOD(TestIntersectionNode)
+		{
+			Box box{ Vec3<float>{-10, -10, 10}, Vec3<float>{10, 10, 30}};
+			Ray ray{ Vec3<float>{0, 0, 0}, Vec3<float>{0,0,1} };
+			Node n(&box);
+			float expected = 10;
+
+			std::optional<float> t = n.intersect(ray);
+			Assert::AreEqual(expected, t.value_or(-1));
+		}
 	};
 }
