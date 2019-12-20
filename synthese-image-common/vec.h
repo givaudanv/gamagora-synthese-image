@@ -30,6 +30,12 @@ T operator-(const T&a, const T&b)
 }
 
 template<typename T>
+T operator-(const T& a, const float& b)
+{
+	return T{ a.x - b, a.y - b, a.z - b };
+}
+
+template<typename T>
 T operator*(const T&a, const T&b)
 {
     return T{a.x * b.x, a.y * b.y, a.z * b.z};

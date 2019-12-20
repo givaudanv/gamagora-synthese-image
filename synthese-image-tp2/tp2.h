@@ -11,3 +11,6 @@ void firstIntersect(float& distance, int& currentSphereIndex, std::vector<Sphere
 bool shadow(std::vector<Sphere> sphereTab, Ray lightRay);
 std::vector<Light> generateLightSphere(Vec3<float> c, float r, float intensity, int nbPoint);
 float randomFloat();
+std::unique_ptr<Tree> generateTree(std::vector<Sphere> sphereTab);
+Box boxUnion(std::vector<Sphere> sphereTab);
+std::optional<float> intersectBVH(std::unique_ptr<Tree> tree, Ray ray);

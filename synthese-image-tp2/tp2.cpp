@@ -90,18 +90,67 @@ bool shadow(std::vector<Sphere> sphereTab, Ray lightRay) {
 	return inShadow;
 }
 
-/*Node generateTree(std::vector<Sphere> spheres) {
-	Node root;
-	std::vector<Leaf> leaves;
+Box boxUnion(std::vector<Sphere> sphereTab) {
+	float xmin = 0;
+	float xmax = 0;
+	float ymin = 0;
+	float ymax = 0;
+	float zmin = 0;
+	float zmax = 0;
 
-	for (Sphere s : spheres)
-	{
-		Leaf l(&s);
-		leaves.push_back(l);
+	for (int i = 0; i < sphereTab.size(); i++) {
+		Sphere currentSphere = sphereTab[0];
+		if (i == 0) {
+			xmin = currentSphere.center.x - currentSphere.radius;
+			xmax = currentSphere.center.x + currentSphere.radius;
+			ymin = currentSphere.center.y - currentSphere.radius;
+			ymax = currentSphere.center.y + currentSphere.radius;
+			zmin = currentSphere.center.z - currentSphere.radius;
+			zmax = currentSphere.center.z + currentSphere.radius;
+		}
+		else {
+			if (xmin > currentSphere.center.x - currentSphere.radius) xmin = currentSphere.center.x - currentSphere.radius;
+			if (ymin > currentSphere.center.y - currentSphere.radius) ymin = currentSphere.center.y - currentSphere.radius;
+			if (zmin > currentSphere.center.z - currentSphere.radius) zmin = currentSphere.center.z - currentSphere.radius;
+			if (xmax < currentSphere.center.x + currentSphere.radius) xmin = currentSphere.center.x + currentSphere.radius;
+			if (ymax < currentSphere.center.y + currentSphere.radius) ymin = currentSphere.center.y + currentSphere.radius;
+			if (zmax < currentSphere.center.z + currentSphere.radius) zmin = currentSphere.center.z + currentSphere.radius;
+		}
 	}
 
-	return root;
-}*/
+	return Box{ Vec3<float>{xmin, ymin, zmin}, Vec3<float>{xmax, ymax, zmax} };
+}
+
+std::unique_ptr<Tree> generateTree(std::vector<Sphere> sphereTab) {
+	if (sphereTab.size == 1) {
+		Sphere currentSphere = sphereTab[0];
+		Vec3<float> min = currentSphere.center - currentSphere.radius;
+		Vec3<float> max = currentSphere.center + currentSphere.radius;
+		return std::unique_ptr<Leaf>(new Leaf(currentSphere));
+	}
+	else {
+		std::vector<Sphere> sphereTabLeft;
+		std::vector<Sphere> sphereTabRight;
+
+		int cursor = 0;
+		for (int i = 0; i < sphereTab.size() / 2; i++) {
+			sphereTabLeft[cursor] = sphereTab[i];
+			cursor++;
+		}
+		cursor = 0;
+		for (int i = sphereTab.size() / 2; i < sphereTab.size(); i++) {
+			sphereTabRight[cursor] = sphereTab[i];
+			cursor++;
+		}
+
+		return std::unique_ptr<Node>(new Node(boxUnion(sphereTab), generateTree(sphereTabLeft), generateTree(sphereTabRight)));
+	}
+}
+
+std::optional<float> intersectBVH(std::unique_ptr<Tree> tree, Ray ray) {
+	std::optional<float> distance = tree->intersect(ray);
+	if (distance && distance.value() > 0)
+}
 
 int main()
 {
@@ -109,7 +158,7 @@ int main()
 	PPM ppm(600, 600, 100);
 	Vec3<float> camOrigin = { 300, 300, -1000 };
 
-	std::vector<Sphere> sphereTab = {
+	std::vector<Sphere> sphereTab = { 
 		Sphere{Vec3<float>{300, 300, 300}, 200, Vec3<float>{30, 50, 15}},
 		Sphere{Vec3<float>{75, 75, 50}, 25, Vec3<float>{70, 70, 1}},
 		Sphere{Vec3<float>{525, 300, 50}, 30, Vec3<float>{1, 100, 1}},
@@ -117,14 +166,12 @@ int main()
 		Sphere{Vec3<float>{550, 525, 400}, 100, Vec3<float>{1, 1, 1}},
 	};
 
-	//std::vector<Light> lightTab = generateLightSphere(Vec3<float>{ 100, 550, 25 }, 10, 1, 20);
 	std::vector<Light> lightTab = {
 		Light{ Vec3<float>{100, 550, 25}, Vec3<float>{100,100,100}, 0.1f },
 		Light{ Vec3<float>{600, 300, 25}, Vec3<float>{100,100,100}, 0.1f }
 	};
 
-	//Node root = generateTree(sphereTab);
-
+	std::unique_ptr<Tree> tree = generateTree(sphereTab);
 	initPPM(ppm);
 	
 	for (int row = 0; row < 600; row++) {
@@ -145,6 +192,7 @@ int main()
 				for (unsigned l = 0; l < lightTab.size(); l++) {
 					Light currentLight = lightTab.at(l);
 					Vec3<float> lightDir = normalize(currentLight.origin - pointToLight);
+
 					Vec3<float> normal = normalize(pointToLight - currentSphere.center);
 					float distToLight = norm(lightDir);
 					Ray lightRay{ pointToLight + 0.01f * normal, lightDir};
@@ -155,9 +203,6 @@ int main()
 						red += ((currentLight.intensity * (1 / (distToLight * distToLight))) * dot(lightRay.direction, normal) * currentLight.color.x * currentSphere.albedo.x);
 						green += ((currentLight.intensity * (1 / (distToLight * distToLight))) * dot(lightRay.direction, normal) * currentLight.color.y * currentSphere.albedo.y);
 						blue += ((currentLight.intensity * (1 / (distToLight * distToLight))) * dot(lightRay.direction, normal) * currentLight.color.z * currentSphere.albedo.z);
-						/*red += ((currentLight.intensity * (1 / (distToLight * distToLight))) * dot(lightRay.direction, normal) * currentLight.color.x);
-						green += ((currentLight.intensity * (1 / (distToLight * distToLight))) * dot(lightRay.direction, normal) * currentLight.color.y);
-						blue += ((currentLight.intensity * (1 / (distToLight * distToLight))) * dot(lightRay.direction, normal) * currentLight.color.z);*/
 					}
 				}
 			}

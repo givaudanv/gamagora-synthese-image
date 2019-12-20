@@ -91,13 +91,13 @@ namespace teststp2
 
 		TEST_METHOD(TestIntersectionNode)
 		{
-			Box box{ Vec3<float>{-10, -10, 10}, Vec3<float>{10, 10, 30}};
-			Ray ray{ Vec3<float>{0, 0, 0}, Vec3<float>{0,0,1} };
+			Box box{ Vec3<float>{0, 0, 10}, Vec3<float>{10, 10, 20}};
+			Ray ray{ Vec3<float>{5, 5, 0}, Vec3<float>{0,0,1} };
 			Node n(&box);
 			float expected = 10;
 
 			std::optional<float> t = n.intersect(ray);
-			Assert::AreEqual(expected, t.value_or(-1));
+			Assert::AreEqual(expected, t.value());
 		}
 	};
 }
